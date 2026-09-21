@@ -154,7 +154,6 @@ The current version can be installed manually.
 main.js
 manifest.json
 styles.css
-version.json
 ```
 
 4. Open Obsidian.
@@ -203,7 +202,6 @@ The generated files are:
 main.js
 manifest.json
 styles.css
-version.json
 ```
 
 These files can be copied to:
@@ -426,7 +424,6 @@ notes
 main.js
 manifest.json
 styles.css
-version.json
 ```
 
 4. Obsidianを開きます。
@@ -437,7 +434,6 @@ version.json
 
 公開GitHubリポジトリとReleaseが用意された後は、**BRAT (Beta Reviewer's Auto-update Tool)** を利用してインストールすることもできます。
 
-BRATを利用するために、プラグインがObsidianの公式Community Pluginsに登録されている必要はありません。
 
 BRATを利用する場合：
 
