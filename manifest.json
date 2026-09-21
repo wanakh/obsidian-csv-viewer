@@ -1,8 +1,8 @@
 {
 	"id": "obsidian-csv-viewer",
 	"name": "CSV Viewer",
-	"version": "1.0.0",
-	"minAppVersion": "1.0.0",
+	"version": "1.0.1",
+	"minAppVersion": "1.0.1",
 	"description": "view and edit csv files on Obsidian",
 	"author": "wanakh",
 	"authorUrl": "https://github.com/wanakh",
