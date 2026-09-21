@@ -6,3 +6,80 @@ available in the app when your plugin is enabled.
 If your plugin does not need CSS, delete this file.
 
 */
+.csv-viewer-search {
+	margin-bottom: 16px;
+}
+
+.csv-viewer-search input {
+	width: min(500px, 100%);
+	padding: 8px 10px;
+	font-size: 1em;
+}
+
+.csv-viewer-info {
+	margin-bottom: 8px;
+	color: var(--text-muted);
+	font-size: 0.9em;
+}
+
+.csv-viewer-pagination {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 12px;
+}
+
+.csv-viewer-pagination span {
+	color: var(--text-muted);
+}
+
+.csv-viewer-empty {
+	margin: 16px 0;
+	color: var(--text-muted);
+}
+
+.csv-viewer table {
+	width: 100%;
+	border-collapse: collapse;
+	table-layout: auto;
+	margin-top: 8px;
+}
+
+.csv-viewer th,
+.csv-viewer td {
+	border: 1px solid var(--background-modifier-border);
+	padding: 8px 10px;
+	vertical-align: top;
+	text-align: left;
+}
+
+.csv-viewer th {
+	background-color: var(--background-secondary);
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.csv-viewer td {
+	min-width: 80px;
+}
+
+.csv-viewer td a {
+	color: var(--link-color);
+	text-decoration: none;
+}
+
+.csv-viewer td a:hover {
+	text-decoration: underline;
+}
+
+.csv-viewer td input {
+	box-sizing: border-box;
+	width: 100%;
+	min-width: 120px;
+	padding: 5px 7px;
+	font: inherit;
+}
+
+.csv-viewer td:has(input) {
+	padding: 4px;
+}

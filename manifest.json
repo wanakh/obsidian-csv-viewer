@@ -1,11 +1,11 @@
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
+	"id": "obsidian-csv-viewer",
+	"name": "CSV Viewer",
 	"version": "1.0.0",
 	"minAppVersion": "1.0.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"description": "view and edit csv files on Obsidian",
+	"author": "wanakh",
+	"authorUrl": "https://github.com/wanakh",
+	"fundingUrl": "",
 	"isDesktopOnly": false
 }
