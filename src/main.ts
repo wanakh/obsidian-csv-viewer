@@ -7,7 +7,7 @@ import {
 } from 'obsidian';
 import {
 	DEFAULT_SETTINGS,
-	MyPluginSettings,
+	CsvViewerSettings,
 	CsvViewerSettingTab,
 } from './settings';
 
@@ -23,7 +23,7 @@ function t(
 }
 
 export default class CsvViewerPlugin extends Plugin {
-	settings!: MyPluginSettings;
+	settings!: CsvViewerSettings;
 
 	async onload() {
 		await this.loadSettings();
@@ -42,7 +42,7 @@ export default class CsvViewerPlugin extends Plugin {
 		this.settings = Object.assign(
 			{},
 			DEFAULT_SETTINGS,
-			(await this.loadData()) as Partial<MyPluginSettings>,
+			(await this.loadData()) as Partial<CsvViewerSettings>,
 		);
 	}
 

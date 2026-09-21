@@ -1,14 +1,14 @@
 import { App, PluginSettingTab, Setting, moment } from 'obsidian';
 import CsvViewerPlugin from './main';
 
-export interface MyPluginSettings {
+export interface CsvViewerSettings{
 	pageSize: number;
 	dateColumns: string;
 	linkColumns: string;
 	linkSeparator: string;
 }
 
-export const DEFAULT_SETTINGS: MyPluginSettings = {
+export const DEFAULT_SETTINGS: CsvViewerSettings= {
 	pageSize: 100,
 	dateColumns: 'date',
 	linkColumns: 'notes',
@@ -109,9 +109,7 @@ export class CsvViewerSettingTab extends PluginSettingTab {
 			.addDropdown((dropdown) =>
 				dropdown
 					.addOption(';', ';')
-					.addOption('.', '.')
 					.addOption(':', ':')
-					.addOption('/', '/')
 					.setValue(this.plugin.settings.linkSeparator)
 					.onChange(async (value) => {
 						this.plugin.settings.linkSeparator = value;
