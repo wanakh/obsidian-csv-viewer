@@ -1,26 +1,101 @@
-/*
+.csv-viewer {
+	overflow: auto;
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.csv-viewer-toolbar {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 8px;
+}
 
-If your plugin does not need CSS, delete this file.
+.csv-viewer-toolbar button {
+	cursor: pointer;
+}
 
-*/
+.csv-viewer-toolbar button:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+
+.csv-viewer-toggle-active {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
 .csv-viewer-search {
-	margin-bottom: 16px;
+	margin-bottom: 12px;
 }
 
 .csv-viewer-search input {
-	width: min(500px, 100%);
-	padding: 8px 10px;
-	font-size: 1em;
+	width: 100%;
+	max-width: 500px;
 }
 
 .csv-viewer-info {
 	margin-bottom: 8px;
 	color: var(--text-muted);
-	font-size: 0.9em;
 }
+
+.csv-viewer table {
+	width: 100%;
+	table-layout: auto;
+	border-collapse: collapse;
+}
+
+.csv-viewer th,
+.csv-viewer td {
+	min-width: 80px;
+	padding: 6px 8px;
+	border: 1px solid var(--background-modifier-border);
+}
+
+.csv-viewer thead th {
+	position: sticky;
+	top: 0;
+	z-index: 2;
+	background-color: var(--background-primary);
+}
+
+.csv-viewer-row-actions {
+	width: 32px;
+	min-width: 32px !important;
+	padding: 2px !important;
+	text-align: center;
+}
+
+.csv-viewer-row-actions button {
+	padding: 2px 6px;
+	cursor: pointer;
+}
+
+.csv-viewer-row-menu {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: 4px;
+	background-color: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	box-shadow: var(--shadow-s);
+	z-index: 1000;
+}
+
+.csv-viewer-row-menu-positioned {
+	position: fixed;
+	left: var(--csv-viewer-menu-left);
+	top: var(--csv-viewer-menu-top);
+}
+
+.csv-viewer-row-menu button {
+	white-space: nowrap;
+	text-align: left;
+}
+
+.csv-viewer-row-menu-delete {
+	color: var(--text-error);
+}
+
 
 .csv-viewer-pagination {
 	display: flex;
@@ -29,57 +104,11 @@ If your plugin does not need CSS, delete this file.
 	margin-top: 12px;
 }
 
-.csv-viewer-pagination span {
-	color: var(--text-muted);
-}
-
-.csv-viewer-empty {
-	margin: 16px 0;
-	color: var(--text-muted);
-}
-
-.csv-viewer table {
-	width: 100%;
-	border-collapse: collapse;
-	table-layout: auto;
-	margin-top: 8px;
-}
-
-.csv-viewer th,
-.csv-viewer td {
-	border: 1px solid var(--background-modifier-border);
-	padding: 8px 10px;
-	vertical-align: top;
-	text-align: left;
-}
-
-.csv-viewer th {
-	background-color: var(--background-secondary);
-	font-weight: 600;
-	white-space: nowrap;
-}
-
-.csv-viewer td {
-	min-width: 80px;
-}
-
-.csv-viewer td a {
-	color: var(--link-color);
-	text-decoration: none;
-}
-
-.csv-viewer td a:hover {
-	text-decoration: underline;
-}
-
 .csv-viewer td input {
-	box-sizing: border-box;
-	width: 100%;
-	min-width: 120px;
-	padding: 5px 7px;
-	font: inherit;
+	width: auto;
+	min-width: 12ch;
 }
 
-.csv-viewer td:has(input) {
-	padding: 4px;
+.csv-viewer a {
+	cursor: pointer;
 }
