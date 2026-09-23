@@ -1,68 +1,137 @@
 # CSV Viewer
 
-**CSV Viewer** is an Obsidian plugin for viewing and editing CSV files directly inside Obsidian.
+A CSV viewer and editor plugin for [Obsidian](https://obsidian.md/).
 
-It provides a simple table-based interface for CSV files, with support for editing cells, searching data, pagination, and displaying Obsidian internal links as clickable links.
+CSV files can be opened directly in Obsidian, viewed as tables, edited, and saved back to the original CSV file.
+
+---
 
 ## Features
 
-* View CSV files as tables in Obsidian
-* Edit CSV cells directly
-* Save changes back to the original CSV file
-* Search CSV data
+* View CSV files as tables directly inside Obsidian
+* Open CSV files from the Obsidian file explorer
+* Edit cell values
+* Save changes to the original CSV file
+* Insert rows above or below existing rows
+* Delete rows
+* Undo and redo recent edits
+* Search and filter rows
+* Display search result counts
 * Pagination for large CSV files
-* Display Obsidian internal links as clickable links
+* Reverse display order
+* Optionally keep the first row fixed when reversing the display order
+* Display Obsidian internal links in CSV cells
 * Support multiple links in a single cell
-* Recognize both Wiki-style links and Markdown links
-* Configure date columns
-* Configure link columns
+* Support both Wiki links and Markdown links
+* Configure which columns contain links
+* Configure which columns contain dates
 * Configure the separator used for multiple links
-* English and Japanese UI support
+* English and Japanese user interface
 
-### Obsidian Internal Links
+---
 
-One of the main features of CSV Viewer is its support for Obsidian links inside CSV files.
+## Usage
+
+### Open a CSV file
+
+Open a `.csv` file from the Obsidian file explorer.
+
+The CSV file is displayed as a table in the CSV Viewer.
+
+### Edit a cell
+
+Click a cell to edit its value.
+
+Press **Enter** or move focus away from the cell to save the change.
+
+Changes are saved to the original CSV file.
+
+### Insert a row
+
+Use the row action buttons to insert a new row above or below an existing row.
+
+When a search filter is active, inserting a row uses the original CSV row order. The search field is cleared after inserting the row so that the new row can be displayed and edited.
+
+### Delete a row
+
+Use the row action button to delete a row.
+
+### Search
+
+Enter text in the search field to filter the displayed rows.
+
+The number of matching rows is shown while searching.
+
+Clearing the search field returns the full table.
+
+### Pagination
+
+Large CSV files are displayed using pagination.
+
+The number of rows displayed per page can be configured in the settings.
+
+### Undo and Redo
+
+Use the **Undo** and **Redo** buttons to move through recent edits.
+
+---
+
+## Display Order
+
+The table can be displayed in either:
+
+* Original CSV order
+* Reverse order
+
+These options affect only how the data is displayed. They do not change the order of rows in the CSV file.
+
+### Keep the first row fixed
+
+When reverse display order is enabled, the first row can optionally remain fixed at the top of the table.
+
+This is useful when the first row is used as a header or title row.
+
+---
+
+## Obsidian Internal Links
+
+Cells in configured link columns can contain Obsidian internal links.
+
+Supported formats include:
+
+```text
+[[Note]]
+```
+
+and
+
+```text
+[Note](Note.md)
+```
+
+Multiple links can be placed in the same cell.
 
 For example:
 
-```csv
-date,notes
-2026-09-21,"[[Book Notes]]"
-2026-09-22,"[[Project A]]"
-```
-
-Links are displayed as clickable Obsidian links in the table.
-
-Multiple links can also be stored in a single cell:
-
-```csv
-date,notes
-2026-09-21,"[[Book A]];[[Book B]];[[Book C]]"
-```
-
-The link separator can be configured in the plugin settings.
-
-The plugin recognizes both:
-
 ```text
-[[Note Name]]
+[[Book A]]; [[Book B]]; [[Book C]]
 ```
 
-and:
+The separator can be configured in the plugin settings.
 
-```text
-[Note Name](Note%20Name)
-```
+---
 
 ## Settings
 
-CSV Viewer currently provides the following settings.
+Open:
+
+**Settings → Community plugins → CSV Viewer**
 
 ### Rows per page
 
-Controls the number of CSV rows displayed on each page.
+Sets the number of CSV rows displayed on each page.
 
-The default value is:
+Default:
 
 ```text
 100
@@ -70,17 +139,11 @@ The default value is:
 
 ### Date columns
 
-Specify which columns should be treated as date columns.
+Specify the column names that contain date values.
 
-Multiple columns can be specified by separating their names with commas.
+Multiple column names can be specified if needed.
 
-Example:
-
-```text
-date,created,updated
-```
-
-The default column is:
+Default:
 
 ```text
 date
@@ -88,17 +151,11 @@ date
 
 ### Link columns
 
-Specify which columns should be treated as columns containing Obsidian links.
+Specify the column names that contain Obsidian links.
 
-Multiple columns can be specified by separating their names with commas.
+Multiple column names can be specified if needed.
 
-Example:
-
-```text
-notes,source,related
-```
-
-The default column is:
+Default:
 
 ```text
 notes
@@ -108,47 +165,58 @@ notes
 
 Specifies the separator used when multiple links are stored in one cell.
 
-Available separators:
-
-* `;`
-* `.`
-* `:`
-* `/`
-
-The default separator is:
+Default:
 
 ```text
 ;
 ```
 
-For example:
+Available separators include:
 
 ```text
-[[Book A]];[[Book B]];[[Book C]]
+;
+.
+:
+/
 ```
 
-## Requirements
+### Language
 
-CSV Viewer has been tested with:
+The plugin interface uses English by default.
 
-* Obsidian 1.13.7
+When Obsidian is set to Japanese, the plugin interface is displayed in Japanese.
 
-Other Obsidian versions have not been fully tested.
+---
 
 ## Installation
 
-### Manual installation
+### Community Plugins
 
-The current version can be installed manually.
+1. Open **Settings → Community plugins**
+2. Select **Browse**
+3. Search for **CSV Viewer**
+4. Install the plugin
+5. Enable the plugin
 
-1. Download the plugin files from the GitHub Releases page.
-2. Create the following directory in your Obsidian vault:
+### BRAT
+
+CSV Viewer can also be installed using the **BRAT** plugin.
+
+1. Install **BRAT**
+2. Add the CSV Viewer GitHub repository to BRAT
+3. Install the plugin
+4. Enable **CSV Viewer** in Community plugins
+
+### Manual Installation
+
+1. Download the latest release files.
+2. Create the following folder in your vault:
 
 ```text
 .obsidian/plugins/csv-viewer/
 ```
 
-3. Copy the following files into that directory:
+3. Copy the plugin files into the folder:
 
 ```text
 main.js
@@ -156,29 +224,20 @@ manifest.json
 styles.css
 ```
 
-4. Open Obsidian.
-5. Go to **Settings → Community plugins**.
-6. Enable **CSV Viewer**.
+4. Restart Obsidian or reload the plugins.
+5. Enable **CSV Viewer** in Community plugins.
 
-### BRAT
+---
 
-CSV Viewer can also be installed using **BRAT (Beta Reviewer's Auto-update Tool)** once a public GitHub repository and release are available.
+## Requirements
 
-BRAT does not require the plugin to be officially listed in the Obsidian Community Plugins directory.
+* Obsidian 1.13.7 or later
 
-To install a beta version with BRAT:
-
-1. Install BRAT from Obsidian Community Plugins.
-2. Open BRAT settings.
-3. Choose **Add Beta Plugin**.
-4. Enter the GitHub repository URL for CSV Viewer.
-5. Install and enable CSV Viewer from Obsidian's Community Plugins settings.
-
-BRAT can be useful for testing new releases before the plugin is submitted to the official Community Plugins directory.
+---
 
 ## Development
 
-Clone the repository and install the dependencies:
+Clone the repository and install dependencies:
 
 ```bash
 npm install
@@ -190,235 +249,237 @@ Build the plugin:
 npm run build
 ```
 
-For development with automatic rebuilding:
+Run the linter:
 
 ```bash
-npm run dev
+npm run lint
 ```
-
-The generated files are:
-
-```text
-main.js
-manifest.json
-styles.css
-```
-
-These files can be copied to:
-
-```text
-.obsidian/plugins/csv-viewer/
-```
-
-inside an Obsidian vault for local testing.
-
-## Project Structure
-
-The main source files are:
-
-```text
-src/
-├── main.ts
-└── settings.ts
-
-styles.css
-manifest.json
-package.json
-```
-
-## Current Limitations
-
-CSV Viewer is currently a relatively simple CSV viewer/editor.
-
-The following areas may be improved in future versions:
-
-* More robust CSV parsing and writing
-* More sophisticated handling of quoted fields
-* Column sorting
-* Improved table layout
-* Additional CSV formatting options
-* More advanced link parsing
-* Improved handling of large CSV files
-* Additional localization
-
-## Roadmap
-
-Possible future improvements include:
-
-* Date-based sorting
-* Column sorting
-* Improved CSV parsing
-* Better handling of CSV files with complex quoting
-* More table display options
-* Additional Obsidian integration
-* Improved settings and customization
-* Additional language support
-
-The roadmap may change as development continues.
-
-## License
-
-CSV Viewer is released under the **MIT License**.
-
-See [LICENSE](LICENSE) for the full license text.
 
 ---
 
-# 日本語
+## License
+
+## MIT License
 
 # CSV Viewer
 
-**CSV Viewer** は、Obsidian内でCSVファイルを閲覧・編集するためのプラグインです。
+[Obsidian](https://obsidian.md/) 用のCSVビューアー・編集プラグインです。
 
-CSVファイルを表形式で表示し、セルの編集、検索、ページング、Obsidian内部リンクの表示などを行えます。
+CSVファイルをObsidian上で直接開いて、表形式で表示・編集し、元のCSVファイルに保存できます。
 
-## 主な機能
+---
 
-* CSVファイルをObsidian内で表形式で表示
-* セルを直接編集
-* 編集内容を元のCSVファイルへ保存
-* CSVデータを検索
-* 大きなCSVファイル向けのページング
-* Obsidian内部リンクをクリック可能なリンクとして表示
+## 機能
+
+* CSVファイルをObsidian上で表形式表示
+* ObsidianのファイルエクスプローラーからCSVを開く
+* セルの編集
+* 元のCSVファイルへの保存
+* 行の追加
+* 行の削除
+* 編集履歴のUndo / Redo
+* 検索・絞り込み
+* 検索結果件数の表示
+* 大きなCSVに対応したページネーション
+* 表示順の反転
+* 先頭行を固定した表示
+* Obsidian内部リンクの表示
 * 1つのセルに複数のリンクを設定
-* Wiki形式とMarkdown形式のリンクに対応
-* 日付カラムを設定
-* リンクカラムを設定
+* WikiリンクとMarkdownリンクに対応
+* リンクとして扱う列を設定
+* 日付列を設定
 * 複数リンクの区切り文字を設定
 * 英語・日本語のUIに対応
 
-### Obsidian内部リンク
+---
 
-CSV Viewerの特徴の一つが、CSV内に記述されたObsidianリンクを扱えることです。
+## 使い方
 
-例えば、次のようなCSVを使用できます。
+### CSVファイルを開く
 
-```csv
-date,notes
-2026-09-21,"[[読書メモ]]"
-2026-09-22,"[[プロジェクトA]]"
-```
+Obsidianのファイルエクスプローラーから `.csv` ファイルを開きます。
 
-リンクは表の中でクリック可能なObsidianリンクとして表示されます。
+CSV ViewerでCSVの内容が表形式で表示されます。
 
-1つのセルに複数のリンクを記述することもできます。
+### セルを編集する
 
-```csv
-date,notes
-2026-09-21,"[[本A]];[[本B]];[[本C]]"
-```
+セルをクリックすると編集できます。
 
-複数リンクの区切り文字は設定画面から変更できます。
+**Enter** を押すか、セルからフォーカスを外すと変更が保存されます。
 
-以下の2種類のリンクを認識します。
+変更内容は元のCSVファイルに保存されます。
+
+### 行を追加する
+
+行の操作ボタンから、既存の行の上または下に新しい行を追加できます。
+
+検索で絞り込んでいる状態で行を追加した場合も、元のCSVの行順を基準に追加されます。
+
+行を追加すると検索欄がクリアされ、新しく追加した行を確認・編集できます。
+
+### 行を削除する
+
+行の操作ボタンから行を削除できます。
+
+### 検索
+
+検索欄に文字を入力すると、条件に一致する行だけが表示されます。
+
+検索中は一致した行数も表示されます。
+
+検索欄を空にすると、すべてのデータが表示されます。
+
+### ページネーション
+
+行数の多いCSVはページ単位で表示されます。
+
+1ページあたりの表示行数は設定から変更できます。
+
+### Undo / Redo
+
+**Undo** と **Redo** ボタンを使って、直前の編集操作を戻したり、やり直したりできます。
+
+---
+
+## 表示順
+
+CSVの表示順を以下から切り替えられます。
+
+* CSVの元の順序
+* 逆順
+
+この設定は表示方法だけを変更するもので、CSVファイル内の行順は変更しません。
+
+### 先頭行を固定
+
+逆順表示を有効にした場合、先頭行を表の上部に固定できます。
+
+先頭行をタイトルやヘッダーとして使用する場合に利用できます。
+
+---
+
+## Obsidian内部リンク
+
+設定したリンク列では、Obsidian内部リンクを表示できます。
+
+対応している形式：
 
 ```text
-[[ノート名]]
+[[Note]]
 ```
-
-および
 
 ```text
-[ノート名](ノート名)
+[Note](Note.md)
 ```
+
+1つのセルに複数のリンクを設定することもできます。
+
+例：
+
+```text
+[[Book A]]; [[Book B]]; [[Book C]]
+```
+
+複数リンクに使用する区切り文字は、設定から変更できます。
+
+---
 
 ## 設定
 
-現在、以下の設定を利用できます。
+**設定 → コミュニティプラグイン → CSV Viewer**
 
-### 1ページあたりの行数
+から設定できます。
+
+### Rows per page
 
 1ページに表示するCSVの行数を設定します。
 
-デフォルト値：
+初期値：
 
 ```text
 100
 ```
 
-### 日付カラム
+### Date columns
 
-日付として扱うカラム名を指定します。
+日付として扱う列名を指定します。
 
-複数のカラムを指定する場合は、カンマで区切ります。
+必要に応じて複数の列名を指定できます。
 
-例：
-
-```text
-date,created,updated
-```
-
-デフォルト：
+初期値：
 
 ```text
 date
 ```
 
-### リンクカラム
+### Link columns
 
-Obsidianリンクを含むカラム名を指定します。
+Obsidianリンクを含む列名を指定します。
 
-複数のカラムを指定する場合は、カンマで区切ります。
+必要に応じて複数の列名を指定できます。
 
-例：
-
-```text
-notes,source,related
-```
-
-デフォルト：
+初期値：
 
 ```text
 notes
 ```
 
-### リンク区切り文字
+### Link separator
 
-1つのセルに複数のリンクを記述する場合の区切り文字を指定します。
+1つのセルに複数のリンクを記述する場合の区切り文字を設定します。
 
-使用できる区切り文字：
-
-* `;`
-* `.`
-* `:`
-* `/`
-
-デフォルト：
+初期値：
 
 ```text
 ;
 ```
 
-例えば、
+使用できる区切り文字：
 
 ```text
-[[本A]];[[本B]];[[本C]]
+;
+.
+:
+/
 ```
 
-のように記述できます。
+### Language
 
-## 動作環境
+プラグインのUIはデフォルトで英語です。
 
-以下の環境で動作確認しています。
+Obsidianが日本語に設定されている場合は、日本語のUIが表示されます。
 
-* Obsidian 1.13.7
-
-その他のObsidianバージョンについては、十分な動作確認を行っていません。
+---
 
 ## インストール
 
+### Community Plugins
+
+1. **設定 → コミュニティプラグイン**を開く
+2. **閲覧**を選択
+3. **CSV Viewer**を検索
+4. インストール
+5. プラグインを有効化
+
+### BRAT
+
+**BRAT**を使用してインストールすることもできます。
+
+1. **BRAT**をインストール
+2. BRATにCSV ViewerのGitHubリポジトリを追加
+3. プラグインをインストール
+4. コミュニティプラグインから**CSV Viewer**を有効化
+
 ### 手動インストール
 
-現在のバージョンは手動でインストールできます。
-
-1. GitHubのReleasesページからプラグインファイルをダウンロードします。
-2. Obsidian Vault内に以下のフォルダを作成します。
+1. 最新リリースのファイルをダウンロードします。
+2. Vault内に以下のフォルダを作成します。
 
 ```text
 .obsidian/plugins/csv-viewer/
 ```
 
-3. 以下の3ファイルをフォルダにコピーします。
+3. 以下のファイルをフォルダにコピーします。
 
 ```text
 main.js
@@ -426,24 +487,16 @@ manifest.json
 styles.css
 ```
 
-4. Obsidianを開きます。
-5. **設定 → コミュニティプラグイン**を開きます。
-6. **CSV Viewer**を有効にします。
+4. Obsidianを再起動するか、プラグインを再読み込みします。
+5. コミュニティプラグインから**CSV Viewer**を有効化します。
 
-### BRAT
+---
 
-公開GitHubリポジトリとReleaseが用意された後は、**BRAT (Beta Reviewer's Auto-update Tool)** を利用してインストールすることもできます。
+## 必要環境
 
+* Obsidian 1.13.7 以降
 
-BRATを利用する場合：
-
-1. ObsidianのCommunity PluginsからBRATをインストールします。
-2. BRATの設定を開きます。
-3. **Add Beta Plugin**を選択します。
-4. CSV ViewerのGitHubリポジトリURLを入力します。
-5. インストール後、Obsidianのコミュニティプラグイン設定からCSV Viewerを有効にします。
-
-公式Community Pluginsへの登録前に、開発中のバージョンをテストしてもらう用途などに利用できます。
+---
 
 ## 開発
 
@@ -459,73 +512,15 @@ npm install
 npm run build
 ```
 
-開発中に自動ビルドする場合：
+Lint：
 
 ```bash
-npm run dev
+npm run lint
 ```
 
-生成される主なファイル：
+---
 
-```text
-main.js
-manifest.json
-styles.css
-```
+## License
 
-これらをObsidian Vaultの以下のフォルダにコピーすると、ローカル環境でテストできます。
-
-```text
-.obsidian/plugins/csv-viewer/
-```
-
-## プロジェクト構成
-
-主なソースファイル：
-
-```text
-src/
-├── main.ts
-└── settings.ts
-
-styles.css
-manifest.json
-package.json
-```
-
-## 現在の制限事項
-
-CSV Viewerは現在、比較的シンプルなCSVビューア・エディタです。
-
-今後、以下の点を改善する可能性があります。
-
-* CSVの解析・書き込み処理の強化
-* クォートされたフィールドのより高度な処理
-* カラムのソート
-* テーブルレイアウトの改善
-* CSV表示形式の追加
-* リンク解析の強化
-* 大きなCSVファイルへの対応改善
-* 多言語対応の拡充
-
-## 今後の予定
-
-今後、以下の機能を追加する可能性があります。
-
-* 日付によるソート
-* カラムのソート
-* CSV解析処理の改善
-* 複雑なクォートを含むCSVへの対応改善
-* テーブル表示設定の追加
-* Obsidianとの連携強化
-* 設定項目・カスタマイズ機能の拡充
-* 対応言語の追加
-
-今後の開発状況によってロードマップは変更される場合があります。
-
-## ライセンス
-
-CSV Viewerは**MIT License**の下で公開します。
-
-ライセンスの全文は[LICENSE](LICENSE)を参照してください。
+MIT License
 
