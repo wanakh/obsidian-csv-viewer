@@ -23,6 +23,7 @@ CSV files can be opened directly in Obsidian, viewed as tables, edited, and save
 * Display Obsidian internal links in CSV cells
 * Support multiple links in a single cell
 * Support both Wiki links and Markdown links
+* Autocomplete links using Markdown files in the vault
 * Configure which columns contain links
 * Configure which columns contain dates
 * Configure the separator used for multiple links
@@ -48,19 +49,31 @@ Changes are saved to the original CSV file.
 
 ### Insert a row
 
-Use the row action buttons to insert a new row above or below an existing row.
+Use the row action button at the left side of a row to insert a new row above or below an existing row.
 
-When a search filter is active, inserting a row uses the original CSV row order. The search field is cleared after inserting the row so that the new row can be displayed and edited.
+When a search filter is active, the new row is inserted according to the original CSV row order rather than the filtered display order.
+
+After inserting a row while searching, the search field is cleared so that the newly inserted row can be displayed and edited.
 
 ### Delete a row
 
 Use the row action button to delete a row.
 
+The row is removed from the original CSV data and the change is saved immediately.
+
 ### Search
 
 Enter text in the search field to filter the displayed rows.
 
-The number of matching rows is shown while searching.
+The search is performed while typing.
+
+The number of matching rows and the currently displayed range are shown.
+
+For example:
+
+```text
+250 items: 1–100
+```
 
 Clearing the search field returns the full table.
 
@@ -70,9 +83,19 @@ Large CSV files are displayed using pagination.
 
 The number of rows displayed per page can be configured in the settings.
 
+The default is:
+
+```text
+100
+```
+
 ### Undo and Redo
 
-Use the **Undo** and **Redo** buttons to move through recent edits.
+Use the **← Undo** and **→ Redo** buttons to move through recent edits.
+
+The buttons are disabled when there is no available history in that direction.
+
+The viewer keeps a limited number of recent states rather than an unlimited edit history.
 
 ---
 
@@ -83,13 +106,15 @@ The table can be displayed in either:
 * Original CSV order
 * Reverse order
 
-These options affect only how the data is displayed. They do not change the order of rows in the CSV file.
+These controls are available directly in the CSV viewer and do not change the order of rows stored in the CSV file.
 
 ### Keep the first row fixed
 
-When reverse display order is enabled, the first row can optionally remain fixed at the top of the table.
+The first row can optionally be kept fixed at the top of the table.
 
 This is useful when the first row is used as a header or title row.
+
+When enabled, the first row is not included in the normal row-order reversal.
 
 ---
 
@@ -97,19 +122,21 @@ This is useful when the first row is used as a header or title row.
 
 Cells in configured link columns can contain Obsidian internal links.
 
-Supported formats include:
+The following formats are supported:
+
+### Wiki links
 
 ```text
 [[Note]]
 ```
 
-and
+### Markdown links
 
 ```text
 [Note](Note.md)
 ```
 
-Multiple links can be placed in the same cell.
+Multiple links can be stored in the same cell.
 
 For example:
 
@@ -117,7 +144,125 @@ For example:
 [[Book A]]; [[Book B]]; [[Book C]]
 ```
 
-The separator can be configured in the plugin settings.
+The separator is configurable.
+
+The default separator is:
+
+```text
+;
+```
+
+Other available separators are:
+
+```text
+;
+.
+:
+/
+```
+
+---
+
+## Link Editing and Autocomplete
+
+Link columns provide special editing behavior.
+
+When link suggestions are enabled, the viewer can obtain the Markdown files in the current Obsidian vault and display matching files while editing a link cell.
+
+The suggestions are based on:
+
+* File title
+* File path
+
+Only a limited number of matching results are displayed at a time in a small suggestion list.
+
+Selecting a suggestion automatically inserts an internal link.
+
+### Link format
+
+The link format is determined by how the user starts entering the link.
+
+Enter:
+
+```text
+[
+```
+
+to begin a Markdown link.
+
+Enter:
+
+```text
+[[
+```
+
+to begin a Wiki link.
+
+For example:
+
+```text
+[Book
+```
+
+will use Markdown link syntax when a file is selected:
+
+```text
+[Book](Book.md)
+```
+
+Whereas:
+
+```text
+[[Book
+```
+
+will use Wiki link syntax:
+
+```text
+[[Book]]
+```
+
+This allows the user to choose the link format naturally while editing without requiring a separate format setting.
+
+### Multiple links
+
+Autocomplete also works after the configured link separator.
+
+For example, when `;` is the separator:
+
+```text
+[[Book A]]; [[Book
+```
+
+the second link can be completed independently.
+
+The link format is determined from the link currently being edited, rather than only from the beginning of the entire cell.
+
+---
+
+## Link Storage
+
+CSV Viewer stores links as text in the original CSV file.
+
+For example:
+
+```text
+notes
+[[Book A]]; [[Book B]]
+```
+
+or:
+
+```text
+notes
+[Book A](Book A.md); [Book B](Book B.md)
+```
+
+The plugin does not convert all links in a column to a single global format.
+
+Wiki links and Markdown links can therefore be stored according to the format used when entering each link.
+
+The configured link separator is used only to identify separate links within the same cell. It does not change the link syntax itself.
 
 ---
 
@@ -139,9 +284,9 @@ Default:
 
 ### Date columns
 
-Specify the column names that contain date values.
+Specify the column names that should be treated as date columns.
 
-Multiple column names can be specified if needed.
+Multiple column names can be specified, separated by commas.
 
 Default:
 
@@ -151,9 +296,9 @@ date
 
 ### Link columns
 
-Specify the column names that contain Obsidian links.
+Specify the column names that contain Obsidian internal links.
 
-Multiple column names can be specified if needed.
+Multiple column names can be specified, separated by commas.
 
 Default:
 
@@ -171,7 +316,7 @@ Default:
 ;
 ```
 
-Available separators include:
+Available separators:
 
 ```text
 ;
@@ -180,11 +325,37 @@ Available separators include:
 /
 ```
 
-### Language
+### Link suggestions
+
+When enabled, CSV Viewer can use Markdown files in the current vault as link completion candidates while editing configured link columns.
+
+The suggestions use file titles and paths to find matching notes.
+
+The files themselves are not inserted into the CSV. Only the selected link text is written to the CSV cell.
+
+---
+
+## Language
 
 The plugin interface uses English by default.
 
 When Obsidian is set to Japanese, the plugin interface is displayed in Japanese.
+
+---
+
+## CSV Format
+
+CSV Viewer reads standard comma-separated CSV data.
+
+Values containing commas, quotation marks, or line breaks are written using CSV quoting rules.
+
+For example:
+
+```text
+"Example, value"
+```
+
+When editing a cell, CSV Viewer automatically escapes values when necessary before saving them to the original CSV file.
 
 ---
 
@@ -216,7 +387,7 @@ CSV Viewer can also be installed using the **BRAT** plugin.
 .obsidian/plugins/csv-viewer/
 ```
 
-3. Copy the plugin files into the folder:
+3. Copy the following files into the folder:
 
 ```text
 main.js
@@ -259,7 +430,9 @@ npm run lint
 
 ## License
 
-## MIT License
+MIT License
+
+---
 
 # CSV Viewer
 
@@ -286,6 +459,7 @@ CSVファイルをObsidian上で直接開いて、表形式で表示・編集し
 * Obsidian内部リンクの表示
 * 1つのセルに複数のリンクを設定
 * WikiリンクとMarkdownリンクに対応
+* Vault内のMarkdownファイルを利用したリンク候補表示
 * リンクとして扱う列を設定
 * 日付列を設定
 * 複数リンクの区切り文字を設定
@@ -311,7 +485,7 @@ CSV ViewerでCSVの内容が表形式で表示されます。
 
 ### 行を追加する
 
-行の操作ボタンから、既存の行の上または下に新しい行を追加できます。
+行の左側にある操作ボタンから、既存の行の上または下に新しい行を追加できます。
 
 検索で絞り込んでいる状態で行を追加した場合も、元のCSVの行順を基準に追加されます。
 
@@ -321,11 +495,19 @@ CSV ViewerでCSVの内容が表形式で表示されます。
 
 行の操作ボタンから行を削除できます。
 
+削除した内容は元のCSVファイルに保存されます。
+
 ### 検索
 
-検索欄に文字を入力すると、条件に一致する行だけが表示されます。
+検索欄に文字を入力すると、入力中もリアルタイムで検索されます。
 
-検索中は一致した行数も表示されます。
+検索中は、一致した件数と現在表示している範囲が表示されます。
+
+例：
+
+```text
+250 items: 1–100
+```
 
 検索欄を空にすると、すべてのデータが表示されます。
 
@@ -335,9 +517,19 @@ CSV ViewerでCSVの内容が表形式で表示されます。
 
 1ページあたりの表示行数は設定から変更できます。
 
+初期値：
+
+```text
+100
+```
+
 ### Undo / Redo
 
-**Undo** と **Redo** ボタンを使って、直前の編集操作を戻したり、やり直したりできます。
+**← Undo** と **→ Redo** ボタンを使って、直前の編集操作を戻したり、やり直したりできます。
+
+戻せる履歴がない場合、またはやり直せる履歴がない場合は、それぞれのボタンが無効になります。
+
+履歴は無制限には保持せず、直近の編集状態のみを保持します。
 
 ---
 
@@ -348,13 +540,15 @@ CSVの表示順を以下から切り替えられます。
 * CSVの元の順序
 * 逆順
 
-この設定は表示方法だけを変更するもので、CSVファイル内の行順は変更しません。
+これは表示方法だけを変更するもので、CSVファイル内の行順は変更しません。
 
 ### 先頭行を固定
 
-逆順表示を有効にした場合、先頭行を表の上部に固定できます。
+先頭行を表の上部に固定できます。
 
-先頭行をタイトルやヘッダーとして使用する場合に利用できます。
+CSVの1行目をタイトルやヘッダーとして使用する場合に利用できます。
+
+固定を有効にした場合、先頭行は通常の行順反転の対象には含まれません。
 
 ---
 
@@ -362,11 +556,13 @@ CSVの表示順を以下から切り替えられます。
 
 設定したリンク列では、Obsidian内部リンクを表示できます。
 
-対応している形式：
+### Wikiリンク
 
 ```text
 [[Note]]
 ```
+
+### Markdownリンク
 
 ```text
 [Note](Note.md)
@@ -374,13 +570,135 @@ CSVの表示順を以下から切り替えられます。
 
 1つのセルに複数のリンクを設定することもできます。
 
-例：
+例えば：
 
 ```text
 [[Book A]]; [[Book B]]; [[Book C]]
 ```
 
 複数リンクに使用する区切り文字は、設定から変更できます。
+
+初期値は `;` です。
+
+使用できる区切り文字：
+
+```text
+;
+.
+:
+/
+```
+
+---
+
+## リンク編集と自動補完
+
+リンク列を編集している場合、設定でリンク候補を有効にすると、Vault内のMarkdownファイルを候補として表示できます。
+
+候補の検索には以下を使用します。
+
+* ファイルタイトル
+* ファイルパス
+
+候補はすべて一度に表示するのではなく、小さな候補リストとして表示されます。
+
+候補を選択すると、CSVのセルに内部リンクが自動的に入力されます。
+
+### リンク形式
+
+リンク形式は、入力を開始した方法によって判定されます。
+
+```text
+[
+```
+
+から入力を開始すると、Markdownリンクとして扱います。
+
+```text
+[[
+```
+
+から入力を開始すると、Wikiリンクとして扱います。
+
+例えば、
+
+```text
+[Book
+```
+
+と入力してファイルを選択すると、
+
+```text
+[Book](Book.md)
+```
+
+の形式で保存されます。
+
+一方、
+
+```text
+[[Book
+```
+
+と入力した場合は、
+
+```text
+[[Book]]
+```
+
+の形式で保存されます。
+
+これにより、WikiリンクとMarkdownリンクのどちらを使うかを別の設定で指定する必要はありません。
+
+### 複数リンクの自動補完
+
+自分で設定した区切り文字の後から入力を始めた場合も、自動補完の対象になります。
+
+例えば区切り文字が `;` の場合、
+
+```text
+[[Book A]]; [[Book
+```
+
+と入力すると、2つ目のリンクについて候補を表示できます。
+
+つまり、セル全体の先頭だけではなく、**区切り文字で分割された現在のリンク部分**を基準にリンク形式を判定します。
+
+---
+
+## リンクの保存形式
+
+CSV Viewerは、リンクを通常の文字列として元のCSVファイルに保存します。
+
+例えばWikiリンクの場合：
+
+```text
+notes
+[[Book A]]; [[Book B]]
+```
+
+Markdownリンクの場合：
+
+```text
+notes
+[Book A](Book A.md); [Book B](Book B.md)
+```
+
+リンク列全体を一つの形式に変換することはありません。
+
+そのため、セル内ではWikiリンクとMarkdownリンクを混在させることもできます。
+
+例えば：
+
+```text
+[[Book A]]; [Book B](Book B.md)
+```
+
+のような形式も保存できます。
+
+リンクの区切り文字は、セル内に複数のリンクがあることを判定するために使用されます。
+
+区切り文字そのものがリンク形式を変更するわけではありません。
 
 ---
 
@@ -404,7 +722,7 @@ CSVの表示順を以下から切り替えられます。
 
 日付として扱う列名を指定します。
 
-必要に応じて複数の列名を指定できます。
+複数の列名をカンマ区切りで指定できます。
 
 初期値：
 
@@ -414,9 +732,9 @@ date
 
 ### Link columns
 
-Obsidianリンクを含む列名を指定します。
+Obsidian内部リンクを含む列名を指定します。
 
-必要に応じて複数の列名を指定できます。
+複数の列名をカンマ区切りで指定できます。
 
 初期値：
 
@@ -443,11 +761,41 @@ notes
 /
 ```
 
-### Language
+### Link suggestions
+
+リンク列の編集時に、Vault内のMarkdownファイルをリンク候補として表示する機能です。
+
+有効にすると、ファイルタイトルとファイルパスを利用して候補を検索できます。
+
+候補として表示されたファイルを選択すると、CSVにはリンク文字列だけが保存されます。
+
+MarkdownファイルそのものをCSV内に保存するわけではありません。
+
+---
+
+## Language
 
 プラグインのUIはデフォルトで英語です。
 
 Obsidianが日本語に設定されている場合は、日本語のUIが表示されます。
+
+---
+
+## CSV形式
+
+CSV Viewerはカンマ区切りのCSVデータを読み込みます。
+
+カンマ、ダブルクォート、改行を含む値は、必要に応じてCSVの引用ルールに従って保存されます。
+
+例えば、
+
+```text
+"Example, value"
+```
+
+のような値は、CSVとして正しく保存されます。
+
+セルを編集した場合も、必要に応じて自動的にエスケープしてから元のCSVファイルへ保存します。
 
 ---
 
