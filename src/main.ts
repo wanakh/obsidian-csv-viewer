@@ -1,4 +1,4 @@
-import { FileView, Plugin, TFile, WorkspaceLeaf, moment } from 'obsidian';
+import { FileView, Plugin, TFile, WorkspaceLeaf, getLanguage} from 'obsidian';
 import {
 	DEFAULT_SETTINGS,
 	CsvViewerSettings,
@@ -10,7 +10,7 @@ const VIEW_TYPE_CSV = 'csv-viewer';
 type RowOrder = 'original' | 'reverse';
 
 function t(english: string, japanese: string): string {
-	return moment.locale().toLowerCase().startsWith('ja') ? japanese : english;
+	return getLanguage().toLowerCase().startsWith('ja') ? japanese : english;
 }
 
 export default class CsvViewerPlugin extends Plugin {

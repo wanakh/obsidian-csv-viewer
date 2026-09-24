@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting, moment } from 'obsidian';
+import { App, PluginSettingTab, Setting, getLanguage} from 'obsidian';
 import CsvViewerPlugin from './main';
 
 export interface CsvViewerSettings {
@@ -18,7 +18,7 @@ export const DEFAULT_SETTINGS: CsvViewerSettings = {
 };
 
 function t(english: string, japanese: string): string {
-	return moment.locale().toLowerCase().startsWith('ja') ? japanese : english;
+	return getLanguage().toLowerCase().startsWith('ja') ? japanese : english;
 }
 
 export class CsvViewerSettingTab extends PluginSettingTab {
