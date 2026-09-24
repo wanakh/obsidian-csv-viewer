@@ -1,10 +1,4 @@
-import {
-	FileView,
-	Plugin,
-	TFile,
-	WorkspaceLeaf,
-	moment,
-} from 'obsidian';
+import { FileView, Plugin, TFile, WorkspaceLeaf, moment } from 'obsidian';
 import {
 	DEFAULT_SETTINGS,
 	CsvViewerSettings,
@@ -15,13 +9,8 @@ const VIEW_TYPE_CSV = 'csv-viewer';
 
 type RowOrder = 'original' | 'reverse';
 
-function t(
-	english: string,
-	japanese: string,
-): string {
-	return moment.locale().toLowerCase().startsWith('ja')
-		? japanese
-		: english;
+function t(english: string, japanese: string): string {
+	return moment.locale().toLowerCase().startsWith('ja') ? japanese : english;
 }
 
 export default class CsvViewerPlugin extends Plugin {
@@ -30,10 +19,7 @@ export default class CsvViewerPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-		this.registerView(
-			VIEW_TYPE_CSV,
-			(leaf) => new CsvView(leaf, this),
-		);
+		this.registerView(VIEW_TYPE_CSV, (leaf) => new CsvView(leaf, this));
 
 		this.registerExtensions(['csv'], VIEW_TYPE_CSV);
 
@@ -65,6 +51,9 @@ class CsvView extends FileView {
 	private historyIndex = 0;
 	private readonly maxHistory = 11;
 
+	private linkSuggestionFiles: TFile[] = [];
+	private linkSuggestionsLoaded = false;
+
 	constructor(leaf: WorkspaceLeaf, plugin: CsvViewerPlugin) {
 		super(leaf);
 		this.plugin = plugin;
@@ -93,12 +82,16 @@ class CsvView extends FileView {
 		this.history = [this.cloneData()];
 		this.historyIndex = 0;
 
-		this.render();
+		this.linkSuggestionFiles = [];
+		this.linkSuggestionsLoaded = false;
 
+		this.render();
 	}
 
 	async onUnloadFile(_file: TFile): Promise<void> {
 		this.data = [];
+		this.linkSuggestionFiles = [];
+		this.linkSuggestionsLoaded = false;
 		this.contentEl.empty();
 
 		await super.onUnloadFile(_file);
@@ -156,9 +149,7 @@ class CsvView extends FileView {
 
 		orderButton.addEventListener('click', () => {
 			this.rowOrder =
-				this.rowOrder === 'original'
-					? 'reverse'
-					: 'original';
+				this.rowOrder === 'original' ? 'reverse' : 'original';
 
 			this.currentPage = 0;
 			this.render();
@@ -185,29 +176,26 @@ class CsvView extends FileView {
 		});
 
 		const undoButton = toolbar.createEl('button');
-undoButton.setText('←');
-undoButton.setAttribute(
-	'aria-label',
-	t('Undo', '元に戻す'),
-);
-undoButton.disabled = this.historyIndex === 0;
+		undoButton.setText('←');
+		undoButton.setAttribute('aria-label', t('Undo', '元に戻す'));
+		undoButton.disabled = this.historyIndex === 0;
 
-undoButton.addEventListener('click', () => {
-	void this.undo();
-});
+		undoButton.addEventListener('click', () => {
+			void this.undo().catch((error) => {
+				console.error('Failed to undo CSV edit', error);
+			});
+		});
 
-const redoButton = toolbar.createEl('button');
-redoButton.setText('→');
-redoButton.setAttribute(
-	'aria-label',
-	t('Redo', 'やり直す'),
-);
-redoButton.disabled =
-	this.historyIndex >= this.history.length - 1;
+		const redoButton = toolbar.createEl('button');
+		redoButton.setText('→');
+		redoButton.setAttribute('aria-label', t('Redo', 'やり直す'));
+		redoButton.disabled = this.historyIndex >= this.history.length - 1;
 
-redoButton.addEventListener('click', () => {
-	void this.redo();
-});
+		redoButton.addEventListener('click', () => {
+			void this.redo().catch((error) => {
+				console.error('Failed to redo CSV edit', error);
+			});
+		});
 	}
 
 	private renderTable(header: string[]): void {
@@ -237,9 +225,7 @@ redoButton.addEventListener('click', () => {
 
 		if (query !== '') {
 			rows = rows.filter(({ row }) =>
-				row.some((value) =>
-					value.toLowerCase().includes(query),
-				),
+				row.some((value) => value.toLowerCase().includes(query)),
 			);
 		}
 
@@ -247,10 +233,7 @@ redoButton.addEventListener('click', () => {
 
 		if (totalItems === 0) {
 			const empty = this.contentEl.createEl('p', {
-				text: t(
-					'No matching data.',
-					'一致するデータがありません。',
-				),
+				text: t('No matching data.', '一致するデータがありません。'),
 			});
 			empty.addClass('csv-viewer-empty');
 			return;
@@ -279,19 +262,18 @@ redoButton.addEventListener('click', () => {
 		const table = this.contentEl.createEl('table');
 
 		if (this.keepHeaderOnTop) {
-	const thead = table.createEl('thead');
-	const headerRow = thead.createEl('tr');
-	headerRow.addClass('csv-viewer-sticky-header');
+			const thead = table.createEl('thead');
+			const headerRow = thead.createEl('tr');
+			headerRow.addClass('csv-viewer-sticky-header');
 
-	// 行操作ボタン用の空の列
-	headerRow.createEl('th');
+			headerRow.createEl('th');
 
-	for (const column of header) {
-		headerRow.createEl('th', {
-			text: column,
-		});
-	}
-}
+			for (const column of header) {
+				headerRow.createEl('th', {
+					text: column,
+				});
+			}
+		}
 
 		const tbody = table.createEl('tbody');
 
@@ -313,10 +295,8 @@ redoButton.addEventListener('click', () => {
 
 			actionButton.addEventListener('click', (event) => {
 				event.stopPropagation();
-				this.showRowMenu(
-					actionButton,
-					originalIndex,
-				);
+
+				this.showRowMenu(actionButton, originalIndex);
 			});
 
 			for (
@@ -387,61 +367,64 @@ redoButton.addEventListener('click', () => {
 	}
 
 	private showRowMenu(
-	button: HTMLButtonElement,
-	originalIndex: number,
-): void {
-	const existingMenu = this.contentEl.querySelector(
-		'.csv-viewer-row-menu',
-	);
+		button: HTMLButtonElement,
+		originalIndex: number,
+	): void {
+		const existingMenu = this.contentEl.querySelector(
+			'.csv-viewer-row-menu',
+		);
 
-	existingMenu?.remove();
+		existingMenu?.remove();
 
-	const menu = this.contentEl.createDiv();
-	menu.addClass('csv-viewer-row-menu');
+		const menu = this.contentEl.createDiv();
+		menu.addClass('csv-viewer-row-menu');
 
-	const addAboveButton = menu.createEl('button', {
-		text: t('Insert row above', '上に行を追加'),
-	});
-
-	addAboveButton.addEventListener('click', () => {
-		void this.insertRow(originalIndex, 'above').catch((error) => {
-			console.error('Failed to insert CSV row', error);
+		const addAboveButton = menu.createEl('button', {
+			text: t('Insert row above', '上に行を追加'),
 		});
-		menu.remove();
-	});
 
-	const addBelowButton = menu.createEl('button', {
-		text: t('Insert row below', '下に行を追加'),
-	});
+		addAboveButton.addEventListener('click', () => {
+			void this.insertRow(originalIndex, 'above').catch((error) => {
+				console.error('Failed to insert CSV row', error);
+			});
 
-	addBelowButton.addEventListener('click', () => {
-		void this.insertRow(originalIndex, 'below').catch((error) => {
-			console.error('Failed to insert CSV row', error);
+			menu.remove();
 		});
-		menu.remove();
-	});
 
-	const deleteButton = menu.createEl('button', {
-		text: t('Delete row', 'この行を削除'),
-	});
-
-	deleteButton.addClass('csv-viewer-row-menu-delete');
-
-	deleteButton.addEventListener('click', () => {
-		void this.deleteRow(originalIndex).catch((error) => {
-			console.error('Failed to delete CSV row', error);
+		const addBelowButton = menu.createEl('button', {
+			text: t('Insert row below', '下に行を追加'),
 		});
-		menu.remove();
-	});
 
-	const rect = button.getBoundingClientRect();
+		addBelowButton.addEventListener('click', () => {
+			void this.insertRow(originalIndex, 'below').catch((error) => {
+				console.error('Failed to insert CSV row', error);
+			});
 
-	menu.addClass('csv-viewer-row-menu-positioned');
-	menu.setCssProps({
-		'--csv-viewer-menu-left': `${rect.right + 4}px`,
-		'--csv-viewer-menu-top': `${rect.top}px`,
-	});
-}
+			menu.remove();
+		});
+
+		const deleteButton = menu.createEl('button', {
+			text: t('Delete row', 'この行を削除'),
+		});
+
+		deleteButton.addClass('csv-viewer-row-menu-delete');
+
+		deleteButton.addEventListener('click', () => {
+			void this.deleteRow(originalIndex).catch((error) => {
+				console.error('Failed to delete CSV row', error);
+			});
+
+			menu.remove();
+		});
+
+		const rect = button.getBoundingClientRect();
+
+		menu.addClass('csv-viewer-row-menu-positioned');
+		menu.setCssProps({
+			'--csv-viewer-menu-left': `${rect.right + 4}px`,
+			'--csv-viewer-menu-top': `${rect.top}px`,
+		});
+	}
 
 	private getDisplayRows(): {
 		row: string[];
@@ -477,23 +460,17 @@ redoButton.addEventListener('click', () => {
 		position: 'above' | 'below',
 	): Promise<void> {
 		const newRowLength = this.data[0]?.length ?? 1;
-		const newRow: string[] = Array.from(
-				{ length: newRowLength },
-				() => '',
-			);
+
+		const newRow: string[] = Array.from({ length: newRowLength }, () => '');
 
 		let insertIndex: number;
 
 		if (this.rowOrder === 'original') {
 			insertIndex =
-				position === 'above'
-					? originalIndex
-					: originalIndex + 1;
+				position === 'above' ? originalIndex : originalIndex + 1;
 		} else {
 			insertIndex =
-				position === 'above'
-					? originalIndex + 1
-					: originalIndex;
+				position === 'above' ? originalIndex + 1 : originalIndex;
 		}
 
 		this.data.splice(insertIndex, 0, newRow);
@@ -510,10 +487,7 @@ redoButton.addEventListener('click', () => {
 		}
 
 		const confirmed = window.confirm(
-			t(
-				'Delete this row?',
-				'この行を削除しますか？',
-			),
+			t('Delete this row?', 'この行を削除しますか？'),
 		);
 
 		if (!confirmed) {
@@ -531,10 +505,7 @@ redoButton.addEventListener('click', () => {
 
 		const totalRows = this.getDisplayRows().length;
 		const pageSize = this.plugin.settings.pageSize;
-		const totalPages = Math.max(
-			1,
-			Math.ceil(totalRows / pageSize),
-		);
+		const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
 
 		if (this.currentPage >= totalPages) {
 			this.currentPage = totalPages - 1;
@@ -552,10 +523,7 @@ redoButton.addEventListener('click', () => {
 		);
 	}
 
-	private renderLinkCell(
-		td: HTMLTableCellElement,
-		value: string,
-	): void {
+	private renderLinkCell(td: HTMLTableCellElement, value: string): void {
 		td.empty();
 
 		const separator = this.plugin.settings.linkSeparator;
@@ -572,9 +540,8 @@ redoButton.addEventListener('click', () => {
 				continue;
 			}
 
-			const wikiLinkMatch = linkValue.match(
-				/^\[\[([^\]]+)\]\]$/,
-			);
+			const wikiLinkMatch = linkValue.match(/^\[\[([^\]]+)\]\]$/);
+
 			const markdownLinkMatch = linkValue.match(
 				/^\[([^\]]+)\]\(([^)]+)\)$/,
 			);
@@ -590,6 +557,7 @@ redoButton.addEventListener('click', () => {
 
 				link.addEventListener('click', (event) => {
 					event.preventDefault();
+
 					void this.app.workspace.openLinkText(
 						linkTarget,
 						this.file?.path ?? '',
@@ -608,6 +576,7 @@ redoButton.addEventListener('click', () => {
 
 				link.addEventListener('click', (event) => {
 					event.preventDefault();
+
 					void this.app.workspace.openLinkText(
 						linkTarget,
 						this.file?.path ?? '',
@@ -639,6 +608,15 @@ redoButton.addEventListener('click', () => {
 
 		const currentValue = this.data[rowIndex]?.[columnIndex] ?? '';
 
+		const header = this.data[0] ?? [];
+		const columnName = header[columnIndex] ?? '';
+
+		const linkColumns = this.getColumnNames(
+			this.plugin.settings.linkColumns,
+		);
+
+		const isLinkColumn = linkColumns.has(columnName);
+
 		td.empty();
 
 		const input = td.createEl('input');
@@ -646,42 +624,206 @@ redoButton.addEventListener('click', () => {
 		input.value = currentValue;
 		input.size = Math.max(currentValue.length + 2, 12);
 
+		let saved = false;
+
+		const save = () => {
+			if (saved) {
+				return;
+			}
+
+			saved = true;
+
+			void this.saveCell(input, rowIndex, columnIndex).catch((error) => {
+				console.error('Failed to save CSV cell', error);
+			});
+		};
+
 		input.addEventListener('keydown', (event) => {
 			if (event.key === 'Enter') {
 				event.preventDefault();
-
-				void this.saveCell(
-					input,
-					rowIndex,
-					columnIndex,
-				).catch((error) => {
-					console.error(
-						'Failed to save CSV cell',
-						error,
-					);
-				});
+				save();
 			}
 
 			if (event.key === 'Escape') {
+				saved = true;
+				this.removeLinkSuggestions();
 				td.setText(currentValue);
 			}
 		});
 
 		input.addEventListener('blur', () => {
-			void this.saveCell(
-				input,
-				rowIndex,
-				columnIndex,
-			).catch((error) => {
-				console.error(
-					'Failed to save CSV cell',
-					error,
-				);
-			});
+			save();
 		});
 
 		input.focus();
 		input.select();
+
+		if (isLinkColumn && this.plugin.settings.enableLinkSuggestions) {
+			this.loadLinkSuggestionFiles();
+
+			this.showLinkSuggestions(input, rowIndex, columnIndex);
+		}
+	}
+
+	private loadLinkSuggestionFiles(): void {
+		if (this.linkSuggestionsLoaded) {
+			return;
+		}
+
+		this.linkSuggestionFiles = this.app.vault
+			.getMarkdownFiles()
+			.sort((a, b) => a.path.localeCompare(b.path));
+
+		this.linkSuggestionsLoaded = true;
+	}
+
+	private showLinkSuggestions(
+		input: HTMLInputElement,
+		_rowIndex: number,
+		_columnIndex: number,
+	): void {
+		if (!this.plugin.settings.enableLinkSuggestions) {
+			return;
+		}
+
+		const files = this.linkSuggestionFiles;
+
+		const updateSuggestions = (): void => {
+			this.removeLinkSuggestions();
+
+			const currentSegment = this.getCurrentLinkSegment(input.value);
+
+			const trimmedSegment = currentSegment.trim();
+
+			// [ または [[ から入力している場合だけ候補を表示
+			if (!trimmedSegment.startsWith('[')) {
+				return;
+			}
+
+			const query =
+				this.getLinkSuggestionQuery(trimmedSegment).toLowerCase();
+
+			const candidates = files
+				.filter((file) => {
+					if (query === '') {
+						return true;
+					}
+
+					return (
+						file.basename.toLowerCase().includes(query) ||
+						file.path.toLowerCase().includes(query)
+					);
+				})
+				.slice(0, 10);
+
+			if (candidates.length === 0) {
+				return;
+			}
+
+			const popup = document.body.createDiv();
+			popup.addClass('csv-viewer-link-suggestions');
+
+			const rect = input.getBoundingClientRect();
+
+			popup.addClass('csv-viewer-link-suggestions-positioned');
+
+			popup.setCssProps({
+				'--csv-viewer-suggestions-left': `${rect.left}px`,
+				'--csv-viewer-suggestions-top': `${rect.bottom + 2}px`,
+				'--csv-viewer-suggestions-width': `${Math.max(rect.width, 260)}px`,
+			});
+
+			for (const file of candidates) {
+				const button = popup.createEl('button');
+				button.addClass('csv-viewer-link-suggestion');
+
+				const title = button.createDiv();
+				title.setText(file.basename);
+
+				const path = button.createDiv();
+				path.addClass('csv-viewer-link-suggestion-path');
+				path.setText(file.path);
+
+				button.addEventListener('mousedown', (event) => {
+					event.preventDefault();
+
+					const newLink = this.createLinkValue(file, trimmedSegment);
+
+					input.value = this.replaceCurrentLinkSegment(
+						input.value,
+						newLink,
+					);
+
+					this.removeLinkSuggestions();
+					input.focus();
+				});
+			}
+		};
+
+		input.addEventListener('input', updateSuggestions);
+
+		input.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape') {
+				this.removeLinkSuggestions();
+			}
+		});
+
+		updateSuggestions();
+	}
+
+	private removeLinkSuggestions(): void {
+		const suggestions = document.querySelector(
+			'.csv-viewer-link-suggestions',
+		);
+
+		suggestions?.remove();
+	}
+
+	private getLinkSuggestionQuery(value: string): string {
+		return value
+			.trim()
+			.replace(/^\[\[/, '')
+			.replace(/^\[/, '')
+			.replace(/\]\]$/, '')
+			.replace(/\].*$/, '');
+	}
+
+	private getCurrentLinkSegment(value: string): string {
+		const separator = this.plugin.settings.linkSeparator;
+
+		const lastSeparator = value.lastIndexOf(separator);
+
+		if (lastSeparator === -1) {
+			return value;
+		}
+
+		return value.slice(lastSeparator + separator.length);
+	}
+
+	private replaceCurrentLinkSegment(value: string, newLink: string): string {
+		const separator = this.plugin.settings.linkSeparator;
+
+		const lastSeparator = value.lastIndexOf(separator);
+
+		if (lastSeparator === -1) {
+			return newLink;
+		}
+
+		return value.slice(0, lastSeparator + separator.length) + newLink;
+	}
+
+	private createLinkValue(file: TFile, currentValue: string): string {
+		const trimmed = currentValue.trim();
+
+		if (trimmed.startsWith('[[')) {
+			return `[[${file.path.replace(/\.md$/, '')}]]`;
+		}
+
+		if (trimmed.startsWith('[')) {
+			return `[${file.basename}](${file.path})`;
+		}
+
+		return `[[${file.path.replace(/\.md$/, '')}]]`;
 	}
 
 	private async saveCell(
@@ -694,6 +836,8 @@ redoButton.addEventListener('click', () => {
 		if (!this.data[rowIndex]) {
 			return;
 		}
+
+		this.removeLinkSuggestions();
 
 		this.data[rowIndex][columnIndex] = newValue;
 
@@ -716,61 +860,58 @@ redoButton.addEventListener('click', () => {
 	}
 
 	private cloneData(): string[][] {
-	return this.data.map((row) => [...row]);
-}
+		return this.data.map((row) => [...row]);
+	}
 
-private addHistory(): void {
-	this.history = this.history.slice(
-		0,
-		this.historyIndex + 1,
-	);
+	private addHistory(): void {
+		this.history = this.history.slice(0, this.historyIndex + 1);
 
-	this.history.push(this.cloneData());
+		this.history.push(this.cloneData());
 
-	if (this.history.length > this.maxHistory) {
-		this.history.shift();
-	} else {
+		if (this.history.length > this.maxHistory) {
+			this.history.shift();
+		} else {
+			this.historyIndex++;
+		}
+	}
+
+	private async undo(): Promise<void> {
+		if (this.historyIndex === 0) {
+			return;
+		}
+
+		this.historyIndex--;
+
+		const state = this.history[this.historyIndex];
+
+		if (!state) {
+			return;
+		}
+
+		this.data = state.map((row) => [...row]);
+
+		await this.saveCsv();
+		this.render();
+	}
+
+	private async redo(): Promise<void> {
+		if (this.historyIndex >= this.history.length - 1) {
+			return;
+		}
+
 		this.historyIndex++;
+
+		const state = this.history[this.historyIndex];
+
+		if (!state) {
+			return;
+		}
+
+		this.data = state.map((row) => [...row]);
+
+		await this.saveCsv();
+		this.render();
 	}
-}
-
-private async undo(): Promise<void> {
-	if (this.historyIndex === 0) {
-		return;
-	}
-
-	this.historyIndex--;
-
-	const state = this.history[this.historyIndex];
-
-	if (!state) {
-		return;
-	}
-
-	this.data = state.map((row) => [...row]);
-
-	await this.saveCsv();
-	this.render();
-}
-
-private async redo(): Promise<void> {
-	if (this.historyIndex >= this.history.length - 1) {
-		return;
-	}
-
-	this.historyIndex++;
-
-	const state = this.history[this.historyIndex];
-
-	if (!state) {
-		return;
-	}
-
-	this.data = state.map((row) => [...row]);
-
-	await this.saveCsv();
-	this.render();
-}
 }
 
 function parseCsv(text: string): string[][] {

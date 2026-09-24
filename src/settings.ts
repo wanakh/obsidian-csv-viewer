@@ -6,6 +6,7 @@ export interface CsvViewerSettings {
 	dateColumns: string;
 	linkColumns: string;
 	linkSeparator: string;
+	enableLinkSuggestions: boolean;
 }
 
 export const DEFAULT_SETTINGS: CsvViewerSettings = {
@@ -13,15 +14,11 @@ export const DEFAULT_SETTINGS: CsvViewerSettings = {
 	dateColumns: 'date',
 	linkColumns: 'notes',
 	linkSeparator: ';',
+	enableLinkSuggestions: false,
 };
 
-function t(
-	english: string,
-	japanese: string,
-): string {
-	return moment.locale().toLowerCase().startsWith('ja')
-		? japanese
-		: english;
+function t(english: string, japanese: string): string {
+	return moment.locale().toLowerCase().startsWith('ja') ? japanese : english;
 }
 
 export class CsvViewerSettingTab extends PluginSettingTab {
@@ -52,10 +49,7 @@ export class CsvViewerSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						const pageSize = Number(value);
 
-						if (
-							Number.isInteger(pageSize) &&
-							pageSize > 0
-						) {
+						if (Number.isInteger(pageSize) && pageSize > 0) {
 							this.plugin.settings.pageSize = pageSize;
 							await this.plugin.saveSettings();
 						}
@@ -115,6 +109,23 @@ export class CsvViewerSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.linkSeparator)
 					.onChange(async (value) => {
 						this.plugin.settings.linkSeparator = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName(t('Link suggestions', 'リンク候補'))
+			.setDesc(
+				t(
+					'Show Markdown file names from your vault when editing link columns.',
+					'リンクカラムの編集時に、Vault内のMarkdownファイル名を候補として表示します。',
+				),
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.enableLinkSuggestions)
+					.onChange(async (value) => {
+						this.plugin.settings.enableLinkSuggestions = value;
 						await this.plugin.saveSettings();
 					}),
 			);
