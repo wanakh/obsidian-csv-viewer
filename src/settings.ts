@@ -1,19 +1,15 @@
-import { App, PluginSettingTab, Setting, getLanguage} from 'obsidian';
+import { App, PluginSettingTab, Setting, getLanguage } from 'obsidian';
 import CsvViewerPlugin from './main';
 
 export interface CsvViewerSettings {
 	pageSize: number;
 	dateColumns: string;
-	linkColumns: string;
-	linkSeparator: string;
 	enableLinkSuggestions: boolean;
 }
 
 export const DEFAULT_SETTINGS: CsvViewerSettings = {
 	pageSize: 100,
 	dateColumns: 'date',
-	linkColumns: 'notes',
-	linkSeparator: ';',
 	enableLinkSuggestions: false,
 };
 
@@ -70,45 +66,6 @@ export class CsvViewerSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.dateColumns)
 					.onChange(async (value) => {
 						this.plugin.settings.dateColumns = value;
-						await this.plugin.saveSettings();
-					}),
-			);
-
-		new Setting(containerEl)
-			.setName(t('Link columns', 'リンクカラム'))
-			.setDesc(
-				t(
-					'Comma-separated column names to treat as internal links.',
-					'内部リンクとして扱うカラム名をカンマ区切りで指定します。',
-				),
-			)
-			.addText((text) =>
-				text
-					.setPlaceholder('Notes')
-					.setValue(this.plugin.settings.linkColumns)
-					.onChange(async (value) => {
-						this.plugin.settings.linkColumns = value;
-						await this.plugin.saveSettings();
-					}),
-			);
-
-		new Setting(containerEl)
-			.setName(t('Link separator', 'リンク区切り文字'))
-			.setDesc(
-				t(
-					'Separator used between multiple links in a link column.',
-					'リンクカラム内で複数のリンクを区切る文字です。',
-				),
-			)
-			.addDropdown((dropdown) =>
-				dropdown
-					.addOption(';', ';')
-					.addOption('.', '.')
-					.addOption(':', ':')
-					.addOption('/', '/')
-					.setValue(this.plugin.settings.linkSeparator)
-					.onChange(async (value) => {
-						this.plugin.settings.linkSeparator = value;
 						await this.plugin.saveSettings();
 					}),
 			);

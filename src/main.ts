@@ -1,4 +1,4 @@
-import { FileView, Plugin, TFile, WorkspaceLeaf, getLanguage} from 'obsidian';
+import { FileView, Plugin, TFile, WorkspaceLeaf, getLanguage } from 'obsidian';
 import {
 	DEFAULT_SETTINGS,
 	CsvViewerSettings,
@@ -8,6 +8,21 @@ import {
 const VIEW_TYPE_CSV = 'csv-viewer';
 
 type RowOrder = 'original' | 'reverse';
+type LinkType = 'wiki' | 'markdown';
+
+interface LinkMatch {
+	start: number;
+	end: number;
+	type: LinkType;
+	text: string;
+	target: string;
+}
+
+interface LinkContext {
+	type: LinkType;
+	start: number;
+	query: string;
+}
 
 function t(english: string, japanese: string): string {
 	return getLanguage().toLowerCase().startsWith('ja') ? japanese : english;
@@ -92,6 +107,7 @@ class CsvView extends FileView {
 		this.data = [];
 		this.linkSuggestionFiles = [];
 		this.linkSuggestionsLoaded = false;
+		this.removeLinkSuggestions();
 		this.contentEl.empty();
 
 		await super.onUnloadFile(_file);
@@ -211,14 +227,6 @@ class CsvView extends FileView {
 		oldInfo?.remove();
 		oldEmpty?.remove();
 
-		const dateColumns = this.getColumnNames(
-			this.plugin.settings.dateColumns,
-		);
-
-		const linkColumns = this.getColumnNames(
-			this.plugin.settings.linkColumns,
-		);
-
 		let rows = this.getDisplayRows();
 
 		const query = this.searchQuery.trim().toLowerCase();
@@ -235,11 +243,14 @@ class CsvView extends FileView {
 			const empty = this.contentEl.createEl('p', {
 				text: t('No matching data.', '一致するデータがありません。'),
 			});
+
 			empty.addClass('csv-viewer-empty');
+
 			return;
 		}
 
 		const pageSize = this.plugin.settings.pageSize;
+
 		const totalPages = Math.ceil(totalItems / pageSize);
 
 		if (this.currentPage >= totalPages) {
@@ -247,7 +258,9 @@ class CsvView extends FileView {
 		}
 
 		const start = this.currentPage * pageSize;
+
 		const end = Math.min(start + pageSize, totalItems);
+
 		const pageRows = rows.slice(start, end);
 
 		const info = this.contentEl.createDiv();
@@ -263,7 +276,9 @@ class CsvView extends FileView {
 
 		if (this.keepHeaderOnTop) {
 			const thead = table.createEl('thead');
+
 			const headerRow = thead.createEl('tr');
+
 			headerRow.addClass('csv-viewer-sticky-header');
 
 			headerRow.createEl('th');
@@ -284,9 +299,11 @@ class CsvView extends FileView {
 			const originalIndex = item.originalIndex;
 
 			const actionCell = tr.createEl('td');
+
 			actionCell.addClass('csv-viewer-row-actions');
 
 			const actionButton = actionCell.createEl('button');
+
 			actionButton.setText('⋮');
 			actionButton.setAttribute(
 				'aria-label',
@@ -305,19 +322,10 @@ class CsvView extends FileView {
 				columnIndex++
 			) {
 				const td = tr.createEl('td');
+
 				const value = row[columnIndex] ?? '';
-				const columnName = header[columnIndex] ?? '';
 
-				const isDateColumn = dateColumns.has(columnName);
-				const isLinkColumn = linkColumns.has(columnName);
-
-				if (isLinkColumn) {
-					this.renderLinkCell(td, value);
-				} else if (isDateColumn) {
-					td.setText(value);
-				} else {
-					td.setText(value);
-				}
+				this.renderCellContent(td, value);
 
 				td.addEventListener('click', (event) => {
 					if ((event.target as HTMLElement).tagName === 'A') {
@@ -330,6 +338,7 @@ class CsvView extends FileView {
 		}
 
 		const pagination = this.contentEl.createDiv();
+
 		pagination.addClass('csv-viewer-pagination');
 
 		const previousButton = pagination.createEl('button', {
@@ -366,6 +375,97 @@ class CsvView extends FileView {
 		});
 	}
 
+	private renderCellContent(td: HTMLTableCellElement, value: string): void {
+		td.empty();
+
+		const matches = this.findLinks(value);
+
+		if (matches.length === 0) {
+			td.setText(value);
+			return;
+		}
+
+		let position = 0;
+
+		for (const match of matches) {
+			if (match.start > position) {
+				td.createSpan({
+					text: value.slice(position, match.start),
+				});
+			}
+
+			const link = td.createEl('a', {
+				text: match.text,
+			});
+
+			link.href = '#';
+
+			link.addEventListener('click', (event) => {
+				event.preventDefault();
+
+				void this.app.workspace.openLinkText(
+					match.target,
+					this.file?.path ?? '',
+					false,
+				);
+			});
+
+			position = match.end;
+		}
+
+		if (position < value.length) {
+			td.createSpan({
+				text: value.slice(position),
+			});
+		}
+	}
+
+	private findLinks(value: string): LinkMatch[] {
+		const matches: LinkMatch[] = [];
+
+		const wikiRegex = /\[\[([^\]]+)\]\]/g;
+
+		const markdownRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+
+		let match: RegExpExecArray | null;
+
+		while ((match = wikiRegex.exec(value)) !== null) {
+			matches.push({
+				start: match.index,
+				end: match.index + match[0].length,
+				type: 'wiki',
+				text: match[1] ?? '',
+				target: match[1] ?? '',
+			});
+		}
+
+		while ((match = markdownRegex.exec(value)) !== null) {
+			matches.push({
+				start: match.index,
+				end: match.index + match[0].length,
+				type: 'markdown',
+				text: match[1] ?? '',
+				target: match[2] ?? '',
+			});
+		}
+
+		matches.sort((a, b) => a.start - b.start);
+
+		const filtered: LinkMatch[] = [];
+
+		for (const current of matches) {
+			const previous = filtered[filtered.length - 1];
+
+			if (previous && current.start < previous.end) {
+				continue;
+			}
+
+			filtered.push(current);
+		}
+
+		return filtered;
+	}
+
 	private showRowMenu(
 		button: HTMLButtonElement,
 		originalIndex: number,
@@ -377,6 +477,7 @@ class CsvView extends FileView {
 		existingMenu?.remove();
 
 		const menu = this.contentEl.createDiv();
+
 		menu.addClass('csv-viewer-row-menu');
 
 		const addAboveButton = menu.createEl('button', {
@@ -420,6 +521,7 @@ class CsvView extends FileView {
 		const rect = button.getBoundingClientRect();
 
 		menu.addClass('csv-viewer-row-menu-positioned');
+
 		menu.setCssProps({
 			'--csv-viewer-menu-left': `${rect.right + 4}px`,
 			'--csv-viewer-menu-top': `${rect.top}px`,
@@ -504,7 +606,9 @@ class CsvView extends FileView {
 		this.addHistory();
 
 		const totalRows = this.getDisplayRows().length;
+
 		const pageSize = this.plugin.settings.pageSize;
+
 		const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
 
 		if (this.currentPage >= totalPages) {
@@ -512,89 +616,6 @@ class CsvView extends FileView {
 		}
 
 		this.render();
-	}
-
-	private getColumnNames(value: string): Set<string> {
-		return new Set(
-			value
-				.split(',')
-				.map((name) => name.trim())
-				.filter((name) => name !== ''),
-		);
-	}
-
-	private renderLinkCell(td: HTMLTableCellElement, value: string): void {
-		td.empty();
-
-		const separator = this.plugin.settings.linkSeparator;
-
-		const values = value
-			.split(separator)
-			.map((item) => item.trim())
-			.filter((item) => item !== '');
-
-		for (let i = 0; i < values.length; i++) {
-			const linkValue = values[i];
-
-			if (!linkValue) {
-				continue;
-			}
-
-			const wikiLinkMatch = linkValue.match(/^\[\[([^\]]+)\]\]$/);
-
-			const markdownLinkMatch = linkValue.match(
-				/^\[([^\]]+)\]\(([^)]+)\)$/,
-			);
-
-			if (wikiLinkMatch) {
-				const linkTarget = wikiLinkMatch[1] ?? '';
-
-				const link = td.createEl('a', {
-					text: linkTarget,
-				});
-
-				link.href = '#';
-
-				link.addEventListener('click', (event) => {
-					event.preventDefault();
-
-					void this.app.workspace.openLinkText(
-						linkTarget,
-						this.file?.path ?? '',
-						false,
-					);
-				});
-			} else if (markdownLinkMatch) {
-				const linkText = markdownLinkMatch[1] ?? '';
-				const linkTarget = markdownLinkMatch[2] ?? '';
-
-				const link = td.createEl('a', {
-					text: linkText,
-				});
-
-				link.href = '#';
-
-				link.addEventListener('click', (event) => {
-					event.preventDefault();
-
-					void this.app.workspace.openLinkText(
-						linkTarget,
-						this.file?.path ?? '',
-						false,
-					);
-				});
-			} else {
-				td.createSpan({
-					text: linkValue,
-				});
-			}
-
-			if (i < values.length - 1) {
-				td.createSpan({
-					text: ` ${separator} `,
-				});
-			}
-		}
 	}
 
 	private editCell(
@@ -607,15 +628,6 @@ class CsvView extends FileView {
 		}
 
 		const currentValue = this.data[rowIndex]?.[columnIndex] ?? '';
-
-		const header = this.data[0] ?? [];
-		const columnName = header[columnIndex] ?? '';
-
-		const linkColumns = this.getColumnNames(
-			this.plugin.settings.linkColumns,
-		);
-
-		const isLinkColumn = linkColumns.has(columnName);
 
 		td.empty();
 
@@ -658,10 +670,10 @@ class CsvView extends FileView {
 		input.focus();
 		input.select();
 
-		if (isLinkColumn && this.plugin.settings.enableLinkSuggestions) {
+		if (this.plugin.settings.enableLinkSuggestions) {
 			this.loadLinkSuggestionFiles();
 
-			this.showLinkSuggestions(input, rowIndex, columnIndex);
+			this.showLinkSuggestions(input);
 		}
 	}
 
@@ -677,33 +689,23 @@ class CsvView extends FileView {
 		this.linkSuggestionsLoaded = true;
 	}
 
-	private showLinkSuggestions(
-		input: HTMLInputElement,
-		_rowIndex: number,
-		_columnIndex: number,
-	): void {
+	private showLinkSuggestions(input: HTMLInputElement): void {
 		if (!this.plugin.settings.enableLinkSuggestions) {
 			return;
 		}
 
-		const files = this.linkSuggestionFiles;
-
 		const updateSuggestions = (): void => {
 			this.removeLinkSuggestions();
 
-			const currentSegment = this.getCurrentLinkSegment(input.value);
+			const context = this.getLinkContext(input);
 
-			const trimmedSegment = currentSegment.trim();
-
-			// [ または [[ から入力している場合だけ候補を表示
-			if (!trimmedSegment.startsWith('[')) {
+			if (!context) {
 				return;
 			}
 
-			const query =
-				this.getLinkSuggestionQuery(trimmedSegment).toLowerCase();
+			const query = context.query.toLowerCase();
 
-			const candidates = files
+			const candidates = this.linkSuggestionFiles
 				.filter((file) => {
 					if (query === '') {
 						return true;
@@ -721,6 +723,7 @@ class CsvView extends FileView {
 			}
 
 			const popup = document.body.createDiv();
+
 			popup.addClass('csv-viewer-link-suggestions');
 
 			const rect = input.getBoundingClientRect();
@@ -730,31 +733,34 @@ class CsvView extends FileView {
 			popup.setCssProps({
 				'--csv-viewer-suggestions-left': `${rect.left}px`,
 				'--csv-viewer-suggestions-top': `${rect.bottom + 2}px`,
-				'--csv-viewer-suggestions-width': `${Math.max(rect.width, 260)}px`,
+				'--csv-viewer-suggestions-width': `${Math.max(
+					rect.width,
+					260,
+				)}px`,
 			});
 
 			for (const file of candidates) {
 				const button = popup.createEl('button');
+
 				button.addClass('csv-viewer-link-suggestion');
 
 				const title = button.createDiv();
+
 				title.setText(file.basename);
 
 				const path = button.createDiv();
+
 				path.addClass('csv-viewer-link-suggestion-path');
+
 				path.setText(file.path);
 
 				button.addEventListener('mousedown', (event) => {
 					event.preventDefault();
 
-					const newLink = this.createLinkValue(file, trimmedSegment);
-
-					input.value = this.replaceCurrentLinkSegment(
-						input.value,
-						newLink,
-					);
+					this.applyLinkSuggestion(input, file, context);
 
 					this.removeLinkSuggestions();
+
 					input.focus();
 				});
 			}
@@ -771,59 +777,82 @@ class CsvView extends FileView {
 		updateSuggestions();
 	}
 
+	private getLinkContext(input: HTMLInputElement): LinkContext | null {
+		const value = input.value;
+
+		const cursorPosition = input.selectionStart ?? value.length;
+
+		const beforeCursor = value.slice(0, cursorPosition);
+
+		const wikiStart = beforeCursor.lastIndexOf('[[');
+
+		const wikiEnd = beforeCursor.lastIndexOf(']]');
+
+		if (wikiStart > wikiEnd) {
+			return {
+				type: 'wiki',
+				start: wikiStart,
+				query: beforeCursor.slice(wikiStart + 2),
+			};
+		}
+
+		const markdownStart = beforeCursor.lastIndexOf('[');
+
+		const markdownEnd = beforeCursor.lastIndexOf('](');
+
+		const previousWikiStart = beforeCursor.lastIndexOf('[[');
+
+		if (
+			markdownStart >= 0 &&
+			markdownStart > markdownEnd &&
+			markdownStart >= previousWikiStart + 1
+		) {
+			return {
+				type: 'markdown',
+				start: markdownStart,
+				query: beforeCursor.slice(markdownStart + 1),
+			};
+		}
+
+		return null;
+	}
+
+	private applyLinkSuggestion(
+		input: HTMLInputElement,
+		file: TFile,
+		context: LinkContext,
+	): void {
+		const value = input.value;
+
+		const cursorPosition = input.selectionStart ?? value.length;
+
+		const linkValue =
+			context.type === 'wiki'
+				? `[[${file.path.replace(/\.md$/, '')}]]`
+				: `[${file.basename}](${file.path})`;
+
+		input.value =
+			value.slice(0, context.start) +
+			linkValue +
+			value.slice(cursorPosition);
+
+		const newPosition = context.start + linkValue.length;
+
+		input.setSelectionRange(newPosition, newPosition);
+
+		input.dispatchEvent(
+			new Event('input', {
+				bubbles: true,
+			}),
+		);
+	}
+
 	private removeLinkSuggestions(): void {
 		const suggestions = document.querySelector(
 			'.csv-viewer-link-suggestions',
 		);
 
 		suggestions?.remove();
-	}
-
-	private getLinkSuggestionQuery(value: string): string {
-		return value
-			.trim()
-			.replace(/^\[\[/, '')
-			.replace(/^\[/, '')
-			.replace(/\]\]$/, '')
-			.replace(/\].*$/, '');
-	}
-
-	private getCurrentLinkSegment(value: string): string {
-		const separator = this.plugin.settings.linkSeparator;
-
-		const lastSeparator = value.lastIndexOf(separator);
-
-		if (lastSeparator === -1) {
-			return value;
-		}
-
-		return value.slice(lastSeparator + separator.length);
-	}
-
-	private replaceCurrentLinkSegment(value: string, newLink: string): string {
-		const separator = this.plugin.settings.linkSeparator;
-
-		const lastSeparator = value.lastIndexOf(separator);
-
-		if (lastSeparator === -1) {
-			return newLink;
-		}
-
-		return value.slice(0, lastSeparator + separator.length) + newLink;
-	}
-
-	private createLinkValue(file: TFile, currentValue: string): string {
-		const trimmed = currentValue.trim();
-
-		if (trimmed.startsWith('[[')) {
-			return `[[${file.path.replace(/\.md$/, '')}]]`;
-		}
-
-		if (trimmed.startsWith('[')) {
-			return `[${file.basename}](${file.path})`;
-		}
-
-		return `[[${file.path.replace(/\.md$/, '')}]]`;
 	}
 
 	private async saveCell(
