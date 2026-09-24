@@ -143,24 +143,6 @@ For example:
 ```text
 [[Book A]]; [[Book B]]; [[Book C]]
 ```
-
-The separator is configurable.
-
-The default separator is:
-
-```text
-;
-```
-
-Other available separators are:
-
-```text
-;
-.
-:
-/
-```
-
 ---
 
 ## Link Editing and Autocomplete
@@ -304,25 +286,6 @@ Default:
 
 ```text
 notes
-```
-
-### Link separator
-
-Specifies the separator used when multiple links are stored in one cell.
-
-Default:
-
-```text
-;
-```
-
-Available separators:
-
-```text
-;
-.
-:
-/
 ```
 
 ### Link suggestions
@@ -575,20 +538,6 @@ CSVの1行目をタイトルやヘッダーとして使用する場合に利用�
 ```text
 [[Book A]]; [[Book B]]; [[Book C]]
 ```
-
-複数リンクに使用する区切り文字は、設定から変更できます。
-
-初期値は `;` です。
-
-使用できる区切り文字：
-
-```text
-;
-.
-:
-/
-```
-
 ---
 
 ## リンク編集と自動補完
@@ -691,14 +640,10 @@ notes
 例えば：
 
 ```text
-[[Book A]]; [Book B](Book B.md)
+[[Book A]] [Book B](Book B.md)
 ```
 
 のような形式も保存できます。
-
-リンクの区切り文字は、セル内に複数のリンクがあることを判定するために使用されます。
-
-区切り文字そのものがリンク形式を変更するわけではありません。
 
 ---
 
@@ -740,25 +685,6 @@ Obsidian内部リンクを含む列名を指定します。
 
 ```text
 notes
-```
-
-### Link separator
-
-1つのセルに複数のリンクを記述する場合の区切り文字を設定します。
-
-初期値：
-
-```text
-;
-```
-
-使用できる区切り文字：
-
-```text
-;
-.
-:
-/
 ```
 
 ### Link suggestions
